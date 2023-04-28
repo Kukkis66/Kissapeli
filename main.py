@@ -17,6 +17,8 @@ class Kissapeli:
         self.korkeus = korkeus
         self.leveys = leveys
         self.naytto = pygame.display.set_mode((self.korkeus, self.leveys))
+        
+        self.kello = pygame.time.Clock()
 
         pygame.display.set_caption("Kissapeli")
     
@@ -31,6 +33,7 @@ class Kissapeli:
             self.kuvat.append(pygame.image.load("images/"+ kuva +".png"))
 
 
+    
     
 
         
@@ -70,6 +73,7 @@ class Kissapeli:
         self.naytto.blit(self.kuvat[0], (self.kissa_x, self.kissa_y))
 
         pygame.display.flip()
+        self.kello.tick(69)
 
 #käynnistää pelin sillä resoluutiolla mikä arvoksi annetaan
-Kissapeli(1024,768) 
+Kissapeli(1024,768)
