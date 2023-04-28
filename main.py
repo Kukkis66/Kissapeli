@@ -10,26 +10,34 @@ class Kissapeli:
         self.korkeus = korkeus
         self.leveys = leveys
         self.naytto = pygame.display.set_mode((self.korkeus, self.leveys))
+        self.fontti = pygame.font.SysFont("Comic Sans", 24)
+
+
 
         self.kissa_x = 0
         self.kissa_y = leveys-self.kuvat[0].get_height()
+        
+        
+        self.vaikeus_aste = 1
+        
         self.kissan_nopeus = 5
-
-        self.vaikeustaso = 10
-
+        self.tavaroiden_maara = 7
+        self.tavaroiden_nopeus = 5
+        
+        
         self.pisteet = 0
-        self.elamat = 9
+        self.hiparit = 1000
 
 
         self.tavaroiden_nopeus = 5
         
-        self.viholliset = []
-        for x in range(self.vaikeustaso):
-            self.viholliset.append([random.randint(1000, 10000),self.leveys-self.kuvat[3].get_height()])
+        self.ankat = []
+        for x in range(self.tavaroiden_maara):
+            self.ankat.append([random.randint(1000, 10000),self.leveys-self.kuvat[3].get_height()])
 
         
         self.kultaraheet = []
-        for x in range(self.vaikeustaso):
+        for x in range(self.tavaroiden_maara):
             self.kultaraheet.append([random.randint(1000, 10000),self.leveys-self.kuvat[4].get_height()])
     
         self.oikealle = False
@@ -66,23 +74,55 @@ class Kissapeli:
         else:
             self.naytto.blit(self.kuvat[1], (self.kissa_x, self.kissa_y))
 
-    #tekee kolmioita
+    #tekee vihulaisia ankkoja
     def ankka(self):
 
-            for self.pahis in self.viholliset:
-                self.naytto.blit(self.kuvat[3], (self.pahis[0], self.pahis[1]))
+            for ankka in self.ankat:
+                self.naytto.blit(self.kuvat[3], (ankka[0], ankka[1]))
 
 
-                self.pahis[0] -= self.tavaroiden_nopeus
-
-                if self.kissa_y+self.kuvat[0].get_height() >= self.pahis[1]+self.kuvat[4].get_height():
-                    if self.kissa_x+self.kuvat[0].get_width() >= self.pahis[0] and self.kissa_x <= self.pahis[0]+self.kuvat[4].get_width():
-                        self.elamat -= 1
+                ankka[0] -= self.tavaroiden_nopeus
+                
+                if ankka[0] <= -100:
+                    ankka[0] = random.randint(1500, 10000)
+                
+                if self.kissa_y+self.kuvat[0].get_height() >= ankka[1]+self.kuvat[4].get_height():
+                    if self.kissa_x+self.kuvat[0].get_width() >= ankka[0] and self.kissa_x <= ankka[0]+self.kuvat[4].get_width():
+                        self.hiparit -= 1
                         self.kissa(1,0)
-                        
+    
+    
+    
+    
+    #piirtää tietoa                    
+    def statistiikka(self):
+        raha = self.fontti.render(f"Rahea: {self.pisteet}", True, (0,0,0))
+        self.naytto.blit(raha,(10, 10))
+        hiparit = self.fontti.render(f"Hiparit: {self.hiparit}", True, (0,0,0))
+        self.naytto.blit(hiparit,(10, 30))
+        vaikeus = self.fontti.render(f"Vaikeus: {self.vaikeus_aste}", True, (0,0,0))
+        self.naytto.blit(vaikeus,(10, 50))
+
+
+
+    #nostaa/laskee vaikeustasoa
+    def vaikeustaso(self, ylos, alas):
+        if ylos == 1 and alas == 0:
+            self.vaikeus_aste += 1
+            self.kissan_nopeus += 1
+            self.tavaroiden_nopeus += 1
+            self.ankat.append([random.randint(1000, 10000),self.leveys-self.kuvat[3].get_height()])
+
+
+        if ylos == 0 and alas == 1:
+            if self.vaikeus_aste > 1 and len(self.ankat) >= 7:
+                self.vaikeus_aste -= 1
+                self.kissan_nopeus -= 1
+                self.tavaroiden_nopeus -= 1
+                self.ankat.pop()
 
         
-        
+    #tekee rahea
     def kultarahe(self):
 
             for rahe in self.kultaraheet:
@@ -117,6 +157,10 @@ class Kissapeli:
                      self.oikealle = True
                 if tapahtuma.key == pygame.K_SPACE:
                     self.hyppy = True
+                if tapahtuma.key == pygame.K_F5:
+                    self.vaikeustaso(1,0)
+                if tapahtuma.key == pygame.K_F6:
+                    self.vaikeustaso(0,1)
             if tapahtuma.type == pygame.KEYUP:
                 if tapahtuma.key == pygame.K_LEFT:
                      self.vasemmalle = False
@@ -150,7 +194,7 @@ class Kissapeli:
     #piirtää itse pelin ja kaiken sisällön siihen
     def piirra_naytto(self):        
         self.naytto.fill((255,255,255))
-        
+        self.statistiikka()
         self.kissa(0,1)
         self.ankka()
         self.kultarahe()
