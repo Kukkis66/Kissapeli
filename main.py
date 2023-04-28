@@ -3,42 +3,42 @@ import random
 
 
 class Kissapeli:
-    def __init__(self, korkeus, leveys) -> None:
+    def __init__(self) -> None:
         pygame.init()
 
         self.lataa_kuvat()
-        self.korkeus = korkeus
-        self.leveys = leveys
-        self.naytto = pygame.display.set_mode((self.korkeus, self.leveys))
+        self.leveys = 10 * self.kuvat[0].get_height()
+        self.korkeus = 6 * self.kuvat[0].get_height()
+        self.naytto = pygame.display.set_mode((self.leveys, self.korkeus))
         self.fontti = pygame.font.SysFont("Comic Sans", 24)
-
+        self.fontti1 = pygame.font.SysFont("Comic Sans", 50)
 
 
         self.kissa_x = 0
-        self.kissa_y = leveys-self.kuvat[0].get_height()
+        self.kissa_y = self.korkeus-self.kuvat[0].get_height()
         
         
         self.vaikeus_aste = 1
         
-        self.kissan_nopeus = 5
+        self.kissan_nopeus = 6
         self.tavaroiden_maara = 7
         self.tavaroiden_nopeus = 5
         
         
         self.pisteet = 0
-        self.hiparit = 1000
+        self.hiparit = 100
 
 
         self.tavaroiden_nopeus = 5
         
         self.ankat = []
         for x in range(self.tavaroiden_maara):
-            self.ankat.append([random.randint(1000, 10000),self.leveys-self.kuvat[3].get_height()])
+            self.ankat.append([random.randint(1000, 10000),self.korkeus-self.kuvat[3].get_height()])
 
         
         self.kultaraheet = []
         for x in range(self.tavaroiden_maara):
-            self.kultaraheet.append([random.randint(1000, 10000),self.leveys-self.kuvat[4].get_height()])
+            self.kultaraheet.append([random.randint(1000, 10000),self.korkeus-self.kuvat[4].get_height()])
     
         self.oikealle = False
         self.vasemmalle = False
@@ -47,6 +47,8 @@ class Kissapeli:
         self.hyppyaika = 13
 
         
+        self.pelilapi = False
+        self.kuolema = False
         
 
 
@@ -65,6 +67,8 @@ class Kissapeli:
         for kuva in ["kissa1", "kissa1_puna", "kissa1_puna_miau", "ankka", "kultarahe"]:
             self.kuvat.append(pygame.image.load("images/"+ kuva +".png"))
 
+    
+    #vaihtaa kissan väriä jos ottaa dmg tai miukuu jos saa rahea
     def kissa(self, puna, musta):
 
         if puna == 0 and musta == 1:
@@ -88,11 +92,18 @@ class Kissapeli:
                 
                 if self.kissa_y+self.kuvat[0].get_height() >= ankka[1]+self.kuvat[4].get_height():
                     if self.kissa_x+self.kuvat[0].get_width() >= ankka[0] and self.kissa_x <= ankka[0]+self.kuvat[4].get_width():
-                        self.hiparit -= 1
                         self.kissa(1,0)
+                        if self.hiparit > 0:
+                            self.hiparit -= 1
+                        
     
-    
-    
+    #kuuntelee vähän tilannetta että missä mennään
+    def tilanne(self):
+        
+        if self.pisteet >= 50:
+            self.pelilapi = True
+        if self.hiparit == 0:
+            self.kuolema = True
     
     #piirtää tietoa                    
     def statistiikka(self):
@@ -105,13 +116,33 @@ class Kissapeli:
 
 
 
+    #aloittaa alusta. Ottaa parametriksi sen hetkisen vaikeusasteen ja vähentään saman verran ankkoja listalta
+    def alusta(self, vaikeus):
+        self.vaikeus_aste = 1
+        
+        self.kissan_nopeus = 6
+        self.tavaroiden_maara = 7
+        self.tavaroiden_nopeus = 5
+        
+        
+        self.pisteet = 0
+        self.hiparit = 100
+        if len(self.ankat) >= 7:
+            for x in range(vaikeus):
+                self.ankat.pop()
+
+        
+
     #nostaa/laskee vaikeustasoa
     def vaikeustaso(self, ylos, alas):
+        
+        
         if ylos == 1 and alas == 0:
-            self.vaikeus_aste += 1
-            self.kissan_nopeus += 1
-            self.tavaroiden_nopeus += 1
-            self.ankat.append([random.randint(1000, 10000),self.leveys-self.kuvat[3].get_height()])
+            if self.vaikeus_aste <= 8:
+                self.vaikeus_aste += 1
+                self.kissan_nopeus += 1
+                self.tavaroiden_nopeus += 1
+                self.ankat.append([random.randint(1000, 10000),self.korkeus-self.kuvat[3].get_height()])
 
 
         if ylos == 0 and alas == 1:
@@ -160,7 +191,11 @@ class Kissapeli:
                 if tapahtuma.key == pygame.K_F5:
                     self.vaikeustaso(1,0)
                 if tapahtuma.key == pygame.K_F6:
-                    self.vaikeustaso(0,1)
+                    self.vaikeustaso(0,1)   
+                if tapahtuma.key == pygame.K_F2:
+                    self.pelilapi = False
+                    self.kuolema = False
+                    self.alusta(self.vaikeus_aste)
             if tapahtuma.type == pygame.KEYUP:
                 if tapahtuma.key == pygame.K_LEFT:
                      self.vasemmalle = False
@@ -171,7 +206,7 @@ class Kissapeli:
             if tapahtuma.type == pygame.QUIT:
                 exit()
         #liikuttaa kissaa oikealle tai vasemmalle ja rajoittaa ettei kisu mene ruudun ulkopuolelle
-        if self.oikealle and self.kissa_x < self.leveys+self.kuvat[0].get_width():
+        if self.oikealle and self.kissa_x+self.kuvat[0].get_width() < self.leveys:
             self.kissa_x += self.kissan_nopeus
         if self.vasemmalle and self.kissa_x > 0:
             self.kissa_x -= self.kissan_nopeus
@@ -194,12 +229,20 @@ class Kissapeli:
     #piirtää itse pelin ja kaiken sisällön siihen
     def piirra_naytto(self):        
         self.naytto.fill((255,255,255))
-        self.statistiikka()
         self.kissa(0,1)
         self.ankka()
         self.kultarahe()
+        self.tilanne()
+        if self.pelilapi == False and self.kuolema == False:
+            self.statistiikka()
+        if self.pelilapi == True:
+            pelilapi = self.fontti1.render(f"PELI LÄPI! Pelaa uudelleen(F2)", True, (0,0,0))
+            self.naytto.blit(pelilapi,(self.leveys/3, self.korkeus/2))
+        if self.kuolema == True:
+            peliloppu = self.fontti1.render(f"MI-AUTS! Pelaa uudelleen(F2)", True, (0,0,0))
+            self.naytto.blit(peliloppu,(self.leveys/3, self.korkeus/2))
         pygame.display.flip()
         self.kello.tick(69)
 
-#käynnistää pelin sillä resoluutiolla mikä arvoksi annetaan
-Kissapeli(1024,768)
+#käynnistää pelin
+Kissapeli()
