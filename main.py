@@ -113,6 +113,8 @@ class Kissapeli:
         self.naytto.blit(hiparit,(10, 30))
         vaikeus = self.fontti.render(f"Vaikeus: {self.vaikeus_aste}", True, (0,0,0))
         self.naytto.blit(vaikeus,(10, 50))
+        ohjeet = self.fontti.render(f"F2: uusi peli     F5: nosta vaikeustasoa     F6: laskee vaikeustasoa", True, (0,0,0))
+        self.naytto.blit(ohjeet,(400, 10))
 
 
 
